@@ -12,6 +12,7 @@ from env import AttrDict
 import json
 import yaml
 from text_preprocess_for_inference import TTSDurAlignPreprocessor, CharTextPreprocessor, TTSPreprocessor
+import time
 
 SAMPLING_RATE = 22050
 
@@ -96,6 +97,8 @@ def split_into_chunks(text, words_per_chunk=100):
 
 
 if __name__ == "__main__":
+    start_time_file = time.time()
+
     parser = argparse.ArgumentParser(description="Text-to-Speech Inference")
     parser.add_argument("--language", type=str, required=True, help="Language (e.g., hindi)")
     parser.add_argument("--gender", type=str, required=True, help="Gender (e.g., female)")
@@ -153,3 +156,7 @@ if __name__ == "__main__":
             audio_arr.append(audio)
     result_array = np.concatenate(audio_arr, axis=0)
     write(output_file, SAMPLING_RATE, result_array)
+
+    end_time_file = time.time()
+    total_time = end_time_file - start_time_file
+    print('Total Time Taken: ', total_time)
