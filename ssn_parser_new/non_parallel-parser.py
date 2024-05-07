@@ -40,11 +40,14 @@ def main():
     rand_num = sys.argv[4]
     phone_file_name = 'phone_out_file'
 
-    os.system(f'cp {unique_words} {parser_path}/')
+    print("Unique words: ", unique_words)
+    print("Parser path: ", parser_path)
+
+    os.system(f'cp "{unique_words}" "{parser_path}/"')
     curr_path = os.getcwd()
     os.chdir(parser_path)
 
-    os.system(f'rm {phone_file_name}.words {phone_file_name}.cls {phone_file_name}.err {phone_file_name}')
+    os.system(f'rm "{phone_file_name}".words "{phone_file_name}".cls "{phone_file_name}".err "{phone_file_name}"')
     os.system('rm -rf temp_output_string phn tempword lists/tmp lists/nasal lists/trans_word lists/out_word')
 
     with open(unique_words) as unique_words_file:
@@ -53,26 +56,30 @@ def main():
 
     os.system(f'rm -rf temp_output_string phn tempword lists/tmp lists/nasal lists/trans_word lists/out_word')
     
-    os.system(f'cp {phone_file_name}.cls {phone_file_name}')
-    os.system(f'sed -i \'s/ /""/g\' {phone_file_name}')
-    os.system(f'sed -i \'s/^/""/g\' {phone_file_name}')
-    os.system(f'sed -i \'s/$/""/g\' {phone_file_name}')
+    os.system(f'cp "{phone_file_name}".cls "{phone_file_name}"')
+    os.system(f'sed -i \'s/ /""/g\' "{phone_file_name}"')
+    os.system(f'sed -i \'s/^/""/g\' "{phone_file_name}"')
+    os.system(f'sed -i \'s/$/""/g\' "{phone_file_name}"')
     subprocess.run(['python', 'get_phone_mapped_text.py', phone_file_name])
-    os.system(f'sed -i \'s/"//g\' {phone_file_name}')
-    os.system(f'sed -i \'s/ //g\' {phone_file_name}')
+    os.system(f'sed -i \'s/"//g\' "{phone_file_name}"')
+    os.system(f'sed -i \'s/ //g\' "{phone_file_name}"')
+
+    print("Phone File Name: ", phone_file_name)
 
     words_str = ''
     with open(f'{phone_file_name}.words') as words_file:
         words_str = words_file.read()
 
     if words_str != '':
-        os.system(f'paste -d\'\\t\' {phone_file_name}.words {phone_file_name} > {output_file_name}')
+        os.system(f'paste -d\'\\t\' "{phone_file_name}".words "{phone_file_name}" > "{output_file_name}"')
     else:
-        os.system(f'touch {output_file_name}')
+        os.system(f'touch "{output_file_name}"')
     
     err_str = ''
-    # with open(f'{phone_file_name}.err') as err_file:
+    # with open(f'"{phone_file_name}".err') as err_file:
     #     err_str = err_file.read()
+
+    print(f'{phone_file_name}.err')
 
     try:
         with open(f'{phone_file_name}.err') as err_file:
@@ -84,8 +91,8 @@ def main():
             err_file.write(f'Error {FileNotFoundError}')
 
     # if err_str != '':
-    #     os.system(f'bash phonify_wrapper.sh {parser_path}/{phone_file_name}.err {output_file_name}.err.out {rand_num} {curr_path}/ssn_parser/')
-    #     os.system(f'cat {output_file_name}.err.out >> {output_file_name}')
+    #     os.system(f'bash phonify_wrapper.sh {parser_path}/"{phone_file_name}".err "{output_file_name}".err.out {rand_num} {curr_path}/ssn_parser/')
+    #     os.system(f'cat "{output_file_name}".err.out >> "{output_file_name}"')
 
     os.chdir(curr_path)
 
