@@ -1,0 +1,3 @@
+tmp/*
+output_audios/*
+__pycache__
