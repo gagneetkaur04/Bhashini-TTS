@@ -14,6 +14,7 @@ import subprocess
 import shutil
 from multiprocessing import Process
 import traceback
+import time
 
 #imports of dependencies from environment.yml
 from num_to_words import num_to_word
@@ -106,8 +107,14 @@ class Phonifier:
 
         # print("Phone dictionary loaded for the following languages:", list(self.phone_dictionary.keys()))
 
+        startTime_g2p = time.time()
+
         self.g2p = G2p()
         print('Loading G2P model... Done!')
+
+        endTime_g2p = time.time()
+        print("Loading of G2P Model takes", endTime_g2p-startTime_g2p, "seconds")
+
         # Mapping between the cmu phones and the iitm cls
         self.cmu_2_cls_map = {
             "AA" : "aa",
@@ -259,7 +266,8 @@ class Phonifier:
 
 
 
-    def load_lang_dict(self, language, phone_dictionary):            
+    def load_lang_dict(self, language, phone_dictionary):
+        startTime_loadLang = time.time()            
         # load dictionary for requested language
         try:
 
@@ -277,6 +285,9 @@ class Phonifier:
             
         except Exception as e:
             print(traceback.format_exc())
+
+        endTime_loadLang = time.time()
+        print(f"Loading of {language} dictionary takes ", endTime_loadLang-startTime_loadLang, "seconds")
 
         return phone_dictionary
 
@@ -324,6 +335,8 @@ class Phonifier:
         return False
 
     def __phonify(self, text, language, gender, phone_dictionary):
+
+        startTime_phonify = time.time()
         # text is expected to be a list of strings
         words = set((" ".join(text)).split(" "))
         #print(f"words test: {words}")
@@ -420,6 +433,10 @@ class Phonifier:
                     phrase_phonified.append(str(phone_dictionary[language][word]))
             # text_phonified.append(self.__post_phonify(" ".join(phrase_phonified),language, gender))
             text_phonified.append(" ".join(phrase_phonified))
+
+        endTime_phonify = time.time()
+        print("Text Phonifying takes ", endTime_phonify-startTime_phonify, "seconds")
+
         return text_phonified
 
     def __merge_lists(self, lists):
@@ -431,6 +448,8 @@ class Phonifier:
 
     def __phonify_list(self, text, language, gender, phone_dictionary):
         # text is expected to be a list of list of strings
+        startTime_phonifyList = time.time()
+
         words = set(self.__merge_lists(text).split(" "))
         non_dict_words = []
         if language in phone_dictionary:
@@ -518,6 +537,10 @@ class Phonifier:
                 # line_phonified.append(self.__post_phonify(" ".join(phrase_phonified), language, gender))
                 line_phonified.append(" ".join(phrase_phonified))
             text_phonified.append(line_phonified)
+
+        endTime_phonifyList = time.time()
+        print("Text Phonifying (List) takes ", endTime_phonifyList-startTime_phonifyList, "seconds")
+
         return text_phonified
 
     def phonify(self, text, language, gender, phone_dictionary):

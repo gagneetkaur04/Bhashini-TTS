@@ -13,6 +13,7 @@ import json
 import yaml
 from text_preprocess_for_inference import TTSDurAlignPreprocessor, CharTextPreprocessor, TTSPreprocessor
 import time
+import pickle
 
 SAMPLING_RATE = 22050
 
@@ -67,17 +68,44 @@ def load_fastspeech2_model(language, gender, device):
     
     return Text2Speech(train_config=tts_config, model_file=tts_model, device=device)
 
+startTime_fast2speech = time.time()
+model = load_fastspeech2_model('hindi', 'male', 'gpu')
+endTime_fast2speech = time.time()
+print("Loading Fast2Speech Model takes ", endTime_fast2speech-startTime_fast2speech, "seconds")
+
 def text_synthesis(language, gender, sample_text, vocoder, MAX_WAV_VALUE, device, alpha):
     # Perform Text-to-Speech synthesis
+    startTime_ts = time.time()
+
     with torch.no_grad():
         # Load the FastSpeech2 model for the specified language and gender
-        
-        model = load_fastspeech2_model(language, gender, device)
 
-       
+        # startTime_fast2speech = time.time()
+        # Unpickle the model loader
+        # if os.path.isfile("fastspeech_model.pkl"):
+        #     with open("fastspeech_model.pkl", "rb") as f:
+        #         model = pickle.load(f)
+
+        #     # model = model(language, gender, device)
+        # else:
+
+        #     model = load_fastspeech2_model(language, gender, device)
+
+        #     with open("fastspeech_model.pkl", "wb") as f:
+        #         pickle.dump(model, f)
+
+        # endTime_fast2speech = time.time()
+        # print("Loading Fast2Speech Model takes ", endTime_fast2speech-startTime_fast2speech, "seconds")
+
+        startTime_mel = time.time()
         # Generate mel-spectrograms from the input text using the FastSpeech2 model
         out = model(sample_text, decode_conf={"alpha": alpha})
         print("TTS Done")  
+
+        endTime_mel = time.time()
+        print("Generating mel-spectrograms from the input text using the FastSpeech2 model takes ", endTime_mel-startTime_mel, "seconds")
+
+        startTime_audio = time.time()
         x = out["feat_gen_denorm"].T.unsqueeze(0) * 2.3262
         x = x.to(device)
         
@@ -86,7 +114,13 @@ def text_synthesis(language, gender, sample_text, vocoder, MAX_WAV_VALUE, device
         audio = y_g_hat.squeeze()
         audio = audio * MAX_WAV_VALUE
         audio = audio.cpu().numpy().astype('int16')
+
+        endTime_audio = time.time()
+        print("Audio Generation: ", endTime_audio-startTime_audio, "seconds")
         
+        endTime_ts = time.time()
+        print("TS takes ", endTime_ts-startTime_ts, "seconds")
+
         # Return the synthesized audio
         return audio
     
@@ -111,9 +145,14 @@ if __name__ == "__main__":
     phone_dictionary = {}
     # Set the device
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    print("Device: ",device)
 
     # Load the HiFi-GAN vocoder with dynamic language and gender
+    startTime_loadHifi = time.time()
     vocoder = load_hifigan_vocoder(args.language, args.gender, device)
+    endTime_loadHifi = time.time()
+    print("Loading Hifigan Vocoder takes ", endTime_loadHifi-startTime_loadHifi, "seconds")
+
     
     if args.language == "urdu" or args.language == "punjabi":
             preprocessor = CharTextPreprocessor()
@@ -127,6 +166,7 @@ if __name__ == "__main__":
     import numpy as np
     import time
 
+    startTime_A1 = time.time()
 
     start_time = time.time()
     audio_arr = []  # Initialize an empty list to store audio samples
@@ -142,9 +182,13 @@ if __name__ == "__main__":
             preprocessed_text, phrases = preprocessor.preprocess(sample_text, args.language, args.gender, phone_dictionary)
             preprocessed_text = " ".join(preprocessed_text)
 
+            startTime_A2 = time.time()
+
             # Generate audio from the preprocessed text using a text-to-speech synthesis function
             audio = text_synthesis(args.language, args.gender, preprocessed_text, vocoder, MAX_WAV_VALUE, device, args.alpha)
-
+            
+            endTime_A2 = time.time()
+            print("A2 takes ", endTime_A2-startTime_A2, "seconds")
             
             # Set the output file name
             if args.output_file:
@@ -156,6 +200,9 @@ if __name__ == "__main__":
             audio_arr.append(audio)
     result_array = np.concatenate(audio_arr, axis=0)
     write(output_file, SAMPLING_RATE, result_array)
+
+    endTime_A1 = time.time()
+    print("A1 takes ", endTime_A1-startTime_A1, "seconds")
 
     end_time_file = time.time()
     total_time = end_time_file - start_time_file
